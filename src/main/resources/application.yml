@@ -1,0 +1,18 @@
+spring:
+    h2:
+        console:
+            enabled: true
+            path: /h2-console
+
+    datasource:
+        url: jdbc:h2:mem:hodolog
+        username: sa
+        password: 1234
+        driver-class-name: org.h2.Driver
+
+    data:
+        web:
+            pageable:
+                max-page-size: 2000
+                default-page-size: 20
+                one-indexed-parameters: true
