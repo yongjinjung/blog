@@ -6,19 +6,27 @@ import com.jinblog.api.repository.PostRepository;
 import com.jinblog.api.request.PostCreate;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -31,6 +39,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 class PostControllerTest {
 
+
+
+    @Autowired
+    private WebApplicationContext wac;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -40,7 +53,6 @@ class PostControllerTest {
     @Autowired
     private PostRepository postRepository;
 
-
     @Test
     @DisplayName("/posts 요청시 Hello World 를 출력한다.")
     void post() throws Exception {
@@ -49,6 +61,14 @@ class PostControllerTest {
                 .andExpect(content().string("Hello World"))
                 .andDo(print());
 
+    }
+
+    @BeforeEach
+    void init(){
+        mockMvc = MockMvcBuilders.webAppContextSetup(wac)
+                .addFilter(new CharacterEncodingFilter(StandardCharsets.UTF_8.name(), true))
+                .alwaysDo(print())
+                .build();
     }
 
     @Test
@@ -225,5 +245,33 @@ class PostControllerTest {
         assertThat(result).isEqualTo("ok");
 
 
+    }
+
+    @Test
+    @DisplayName("글 1개 조회")
+    void get() throws Exception{
+        //given
+        PostCreate requestData = PostCreate.builder().title("제목입니다.").content("내용입니다.").build();
+        String s = objectMapper.writeValueAsString(requestData);
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.post("/posts/writer").contentType(MediaType.APPLICATION_JSON).content(s);
+        mockMvc.perform(content)
+                .andExpect(status().isOk())
+                .andDo(print());
+
+        MockHttpServletRequestBuilder findById = MockMvcRequestBuilders.get("/posts/{postId}", 1L).contentType(MediaType.APPLICATION_JSON);
+        //when
+        MvcResult mvcResult = mockMvc.perform(findById)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("제목입니다."))
+                .andDo(print())
+                .andReturn();
+
+
+        String jsonData = mvcResult.getResponse().getContentAsString();
+
+        Post post = objectMapper.readValue(jsonData, Post.class);
+
+        //then
+        assertThat(post.getContent()).isEqualTo("내용입니다.");
     }
 }

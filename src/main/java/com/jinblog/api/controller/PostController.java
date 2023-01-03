@@ -1,6 +1,7 @@
 package com.jinblog.api.controller;
 
 
+import com.jinblog.api.domain.Post;
 import com.jinblog.api.request.PostCreate;
 import com.jinblog.api.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -93,5 +94,18 @@ public class PostController {
         postService.write(params);
         return ResponseEntity.ok("ok");
     }
+
+    /**
+     * /posts -> 글 전체 조회(검색 + 페이징)
+     * /posts/{postId} -> 글 한개만 조회
+     */
+    @ResponseBody
+    @GetMapping("/posts/{postId}")
+    public ResponseEntity<Object> get(@PathVariable(name = "postId") Long id){
+        Post post = postService.get(id);
+
+        return ResponseEntity.ok(post);
+    }
+
 
 }

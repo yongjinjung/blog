@@ -5,7 +5,7 @@ spring:
             path: /h2-console
 
     datasource:
-        url: jdbc:h2:mem:hodolog
+        url: jdbc:h2:mem:jinblog
         username: sa
         password: 1234
         driver-class-name: org.h2.Driver

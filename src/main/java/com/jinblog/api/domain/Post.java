@@ -1,5 +1,6 @@
 package com.jinblog.api.domain;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class Post {
 
+    @Builder
     public Post(String title, String content) {
         this.title = title;
         this.content = content;
