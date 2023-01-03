@@ -9,8 +9,13 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -64,5 +69,49 @@ class PostServiceTest {
 
         //then
         assertThat(resultPost).isNotNull();
+    }
+
+    @Test
+    @DisplayName("글 리스트 조회")
+    void postList(){
+        Post post1 = Post.builder()
+                .title("titl1")
+                .content("cont1")
+                .build();
+        postRepository.save(post1);
+        Post post2 = Post.builder()
+                .title("titl2")
+                .content("cont2")
+                .build();
+        postRepository.save(post2);
+
+        List<Post> list = postService.postsList();
+
+
+        assertThat(list.size()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("글 조회")
+    void postList2(){
+
+        //given
+        List<Post> postList = IntStream.range(0, 30)
+                .mapToObj(i -> Post.builder()
+                                .title(" 제목 -" + i)
+                                .content("내용 - " + i)
+                                .build())
+                .collect(Collectors.toList());
+
+        postRepository.saveAll(postList);
+
+       Pageable page =  PageRequest.of(0, 5, Sort.Direction.DESC, "id");
+        //when
+        List<Post> list = postService.postsPage(page);
+
+        //then
+        assertThat(list.size()).isEqualTo(5);
+
+
     }
 }
