@@ -3,9 +3,11 @@ package com.jinblog.api.service;
 import com.jinblog.api.domain.Post;
 import com.jinblog.api.repository.PostRepository;
 import com.jinblog.api.request.PostCreate;
+import com.jinblog.api.request.PostEdit;
+import com.jinblog.api.request.PostSearch;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +22,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
+@Slf4j
 class PostServiceTest {
 
     @Autowired
@@ -29,7 +32,7 @@ class PostServiceTest {
     private PostRepository postRepository;
 
     @BeforeEach
-    void clean(){
+    void clean() {
         postRepository.deleteAll();
     }
 
@@ -54,7 +57,7 @@ class PostServiceTest {
 
     @Test
     @DisplayName("특정 글 목록을 조회한다.")
-    void get() throws Exception{
+    void get() throws Exception {
         //given
         Post post = Post.builder()
                 .title("foot")
@@ -73,7 +76,7 @@ class PostServiceTest {
 
     @Test
     @DisplayName("글 리스트 조회")
-    void postList(){
+    void postList() {
         Post post1 = Post.builder()
                 .title("titl1")
                 .content("cont1")
@@ -93,19 +96,19 @@ class PostServiceTest {
 
     @Test
     @DisplayName("글 조회")
-    void postList2(){
+    void postList2() {
 
         //given
         List<Post> postList = IntStream.range(0, 30)
                 .mapToObj(i -> Post.builder()
-                                .title(" 제목 -" + i)
-                                .content("내용 - " + i)
-                                .build())
+                        .title(" 제목 -" + i)
+                        .content("내용 - " + i)
+                        .build())
                 .collect(Collectors.toList());
 
         postRepository.saveAll(postList);
 
-       Pageable page =  PageRequest.of(0, 5, Sort.Direction.DESC, "id");
+        Pageable page = PageRequest.of(0, 5, Sort.Direction.DESC, "id");
         //when
         List<Post> list = postService.postsPage(page);
 
@@ -114,4 +117,57 @@ class PostServiceTest {
 
 
     }
+
+
+    @Test
+    @DisplayName("QueryDSL 를 이용한다")
+    void queryDslPostPage() {
+        //given
+        List<Post> postList = IntStream.range(0, 20)
+                .mapToObj(i -> Post.builder()
+                        .title(" 제목 -" + i)
+                        .content("내용 - " + i)
+                        .build())
+                .collect(Collectors.toList());
+
+        postRepository.saveAll(postList);
+
+        PostSearch search = PostSearch.builder()
+                .page(1)
+                .build();
+
+        //when
+        List<Post> list = postService.queryDslPostPage(search);
+
+        //then
+        log.info("list : {}", list);
+
+        assertThat(list.size()).isEqualTo(20);
+
+    }
+
+
+    @Test
+    @DisplayName("내용을 수정한다.")
+    void update() {
+        //given
+
+        Post post = new Post("제목입니다.", "내용입니다.");
+
+        postRepository.save(post);
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("제목 수정입니다.")
+                .content("내용 수정입니다.")
+                .build();
+
+        //when
+        postService.edit(post.getId(), postEdit);
+        Post post1 = postService.get(post.getId());
+
+        //then
+        assertThat(post1.getContent()).isEqualTo(postEdit.getContent());
+
+    }
+
 }

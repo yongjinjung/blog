@@ -23,7 +23,7 @@ public class ExceptionController {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(Exception.class)
     public void exceptionHandler(Exception e){
-        log.error("exceptionHandler ", e);
+        log.error("exceptionHandler ");
     }
 
     @ResponseBody

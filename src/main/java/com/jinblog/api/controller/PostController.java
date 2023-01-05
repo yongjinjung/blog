@@ -4,6 +4,8 @@ package com.jinblog.api.controller;
 import com.jinblog.api.domain.Post;
 import com.jinblog.api.repository.PostRepository;
 import com.jinblog.api.request.PostCreate;
+import com.jinblog.api.request.PostEdit;
+import com.jinblog.api.request.PostSearch;
 import com.jinblog.api.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -134,5 +136,19 @@ postRepository.saveAll(postList);
         return ResponseEntity.ok(postService.postsPage(pageable  ));
     }
 
+
+    @ResponseBody
+    @GetMapping("/posts/query_dsl")
+    public ResponseEntity<Object> postList(PostSearch postSearch){
+        return ResponseEntity.ok(postService.queryDslPostPage(postSearch));
+    }
+
+
+    @ResponseBody
+    @PostMapping("/posts/edit/{postId}")
+    public ResponseEntity<Object> postEdit(@PathVariable Long postId,@RequestBody @Validated PostEdit postEdit){
+        postService.edit(postId, postEdit);
+        return ResponseEntity.ok(postService.get(postId));
+    }
 
 }

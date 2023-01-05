@@ -5,31 +5,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinblog.api.domain.Post;
 import com.jinblog.api.repository.PostRepository;
 import com.jinblog.api.request.PostCreate;
+import com.jinblog.api.request.PostEdit;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
-import javax.print.attribute.standard.Media;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -385,4 +379,72 @@ class PostControllerTest {
         }
         assertThat(list.size()).isEqualTo(2);
     }
+
+    @Test
+    void query_dsl() throws Exception{
+        //given
+        List<Post> postList = IntStream.range(0, 1000)
+                .mapToObj(i -> Post.builder()
+                        .title("제목 -" + i)
+                        .content("내용 - " + i)
+                        .build())
+                .collect(Collectors.toList());
+
+        postRepository.saveAll(postList);
+
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.get("/posts/query_dsl?page=1&size=2000" )
+                .contentType(MediaType.APPLICATION_JSON);
+
+
+
+        MvcResult result = mockMvc.perform(content)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()", Matchers.is(500)))
+                .andExpect(jsonPath("$.[0].title").value("제목 -499"))
+                .andDo(print())
+                .andReturn();
+
+        String contentAsString = result.getResponse().getContentAsString();
+
+        List<Post> list = objectMapper.readValue(contentAsString, new TypeReference<List<Post>>() {
+        });
+        for (Post post : list) {
+            log.info("tit : {}", post.getTitle());
+            log.info("content : {}", post.getContent());
+        }
+        assertThat(list.size()).isEqualTo(500);
+    }
+
+
+    @Test
+    @DisplayName("컨텐츠 내용을 수정한다.")
+    void edit() throws Exception{
+
+        Post post1 = Post.builder()
+                .title("제목입니다.")
+                .content("내용입니다.")
+                .build();
+       postRepository.save(post1);
+
+        //given
+        PostEdit edit = PostEdit.builder()
+                .title("제목 수정입니다.")
+                .content("내용 수정입니다.")
+                .build();
+
+        String jsonData = objectMapper.writeValueAsString(edit);
+
+        //when
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.post("/posts/edit/{postId}", post1.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonData);
+
+        //then
+        mockMvc.perform(content)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(edit.getTitle()))
+                .andExpect(jsonPath("$.content").value(edit.getContent()))
+                .andDo(print());
+    }
+
 }
