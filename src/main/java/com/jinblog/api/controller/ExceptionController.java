@@ -22,8 +22,10 @@ public class ExceptionController {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(Exception.class)
-    public void exceptionHandler(Exception e){
+    public ResponseEntity<Object> exceptionHandler(Exception e){
         log.error("exceptionHandler ");
+
+        return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
     }
 
     @ResponseBody

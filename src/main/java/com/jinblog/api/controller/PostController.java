@@ -146,9 +146,13 @@ postRepository.saveAll(postList);
 
     @ResponseBody
     @PostMapping("/posts/edit/{postId}")
-    public ResponseEntity<Object> postEdit(@PathVariable Long postId,@RequestBody @Validated PostEdit postEdit){
+    public ResponseEntity<Object> postEdit(@RequestBody @Validated PostEdit postEdit, @PathVariable Long postId){
         postService.edit(postId, postEdit);
-        return ResponseEntity.ok(postService.get(postId));
+
+
+        Post post = postService.get(postId);
+
+        return ResponseEntity.ok(post);
     }
 
 }
