@@ -2,6 +2,7 @@ package com.jinblog.api.service;
 
 import com.jinblog.api.domain.Post;
 import com.jinblog.api.domain.PostEditor;
+import com.jinblog.api.exception.PostNotFound;
 import com.jinblog.api.repository.PostRepository;
 import com.jinblog.api.request.PostCreate;
 import com.jinblog.api.request.PostEdit;
@@ -29,7 +30,7 @@ public class PostService {
     }
 
     public Post get(Long id){
-        Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다."));
+        Post post = postRepository.findById(id).orElseThrow(PostNotFound::new);
         return post;
     }
 
@@ -63,7 +64,7 @@ public class PostService {
     }
 
     public void delete(Long id){
-        Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다."));
+        Post post = postRepository.findById(id).orElseThrow(PostNotFound::new);
         postRepository.delete(post);
     }
 

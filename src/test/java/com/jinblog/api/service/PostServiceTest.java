@@ -1,6 +1,7 @@
 package com.jinblog.api.service;
 
 import com.jinblog.api.domain.Post;
+import com.jinblog.api.exception.PostNotFound;
 import com.jinblog.api.repository.PostRepository;
 import com.jinblog.api.request.PostCreate;
 import com.jinblog.api.request.PostEdit;
@@ -185,5 +186,33 @@ class PostServiceTest {
         assertThat(postRepository.count()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Exception Custom")
+    void findByIdException(){
+        //given
+        Post post = new Post("제목입니다.", "내용입니다.");
+        postRepository.save(post);
+
+        //when
+        assertThatThrownBy(()->{ postService.get(2L); })
+                .isInstanceOf(PostNotFound.class)
+                .hasMessage("존재하지 않는 글입니다.");
+    }
+
+    @Test
+    @DisplayName("Exception Custom2 BDD 스타일")
+    void findByIdException2(){
+        //given
+        Post post = new Post("제목입니다.", "내용입니다.");
+        postRepository.save(post);
+
+        //when
+        Throwable thrown = catchThrowable(()->{ postService.get(2L); });
+
+        //then
+        assertThat(thrown)
+                .isInstanceOf(PostNotFound.class)
+                .hasMessage("존재하지 않는 글입니다.");
+    }
 
 }

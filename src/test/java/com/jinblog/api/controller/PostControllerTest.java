@@ -462,4 +462,49 @@ class PostControllerTest {
                 .andExpect(content().string("ok"))
                 .andDo(print());
     }
+
+    @Test
+    @DisplayName("특정 게시글을 조회 한다.")
+    void findById() throws Exception {
+
+        //given
+        Post post = Post.builder().title("용진짱").content("내용입니다.")
+                .build();
+        postRepository.save(post);
+
+        //when
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.get("/posts/{postId}", 1L)
+                .contentType(MediaType.APPLICATION_JSON);
+
+        //then
+        mockMvc.perform(content)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(post.getTitle()))
+                .andExpect(jsonPath("$.content").value(post.getContent()))
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("특정 게시글을 조회 한다.")
+    void findByIdException() throws Exception {
+
+        //given
+        Post post = Post.builder().title("용진짱").content("내용입니다.")
+                .build();
+        postRepository.save(post);
+
+        //when
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.get("/posts/{postId}", 2L)
+                .contentType(MediaType.APPLICATION_JSON);
+
+        //then
+        mockMvc.perform(content)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(post.getTitle()))
+                .andExpect(jsonPath("$.content").value(post.getContent()))
+                .andDo(print());
+
+    }
+
 }
