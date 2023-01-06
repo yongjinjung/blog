@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '2.7.7'
     id 'io.spring.dependency-management' version '1.1.0'
+    id "org.asciidoctor.jvm.convert" version "3.3.2"
 }
 
 group = 'com.jinblog'
@@ -12,10 +13,17 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+
+    asciidoctorExt
 }
 
 repositories {
     mavenCentral()
+}
+
+ext {
+    asiidocVersion = "2.0.7.RELEASE"
+    snippetsDir = file('build/generated-snippets')
 }
 
 dependencies {
@@ -27,6 +35,10 @@ dependencies {
 
     //Querydsl 추가
     implementation 'com.querydsl:querydsl-jpa'
+
+    asciidoctorExt "org.springframework.restdocs:spring-restdocs-asciidoctor:${asiidocVersion}"
+    testImplementation "org.springframework.restdocs:spring-restdocs-mockmvc:${asiidocVersion}"
+
     annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jpa"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
@@ -44,4 +56,20 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    outputs.dir snippetsDir
+}
+
+asciidoctor {
+    inputs.dir snippetsDir
+    configurations 'asciidoctorExt'
+    dependsOn test
+}
+
+bootJar {
+    dependsOn asciidoctor
+
+    copy {
+        from asciidoctor.outputDir
+        into "src/main/resources/static/docs"
+    }
 }

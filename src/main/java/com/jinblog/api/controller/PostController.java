@@ -164,4 +164,17 @@ postRepository.saveAll(postList);
         return ResponseEntity.ok("ok");
     }
 
+    //API 문서 생성
+
+    // GET /posts/{postId}
+    // POST /
+
+
+    // Spring RestDocs
+    // 운영코드에 -> 영향이없다.
+    // 변경된 기능에 대해서 문서를 생성해준다.
+    // Test 케이스 실행하고 통과된 케이스만 문서를 만들어준다.
+
+
+
 }

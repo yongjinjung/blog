@@ -41,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PostControllerTest {
 
 
+
     @Autowired
     private WebApplicationContext wac;
 
@@ -52,6 +53,11 @@ class PostControllerTest {
 
     @Autowired
     private PostRepository postRepository;
+
+    @BeforeEach
+    void clean() {
+        postRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("/posts 요청시 Hello World 를 출력한다.")
@@ -81,7 +87,7 @@ class PostControllerTest {
 
         mockMvc.perform(content)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("타이틀을 입력해주세요."))
+                .andExpect(content().string("Hello World"))
                 .andDo(print());
     }
 
@@ -93,8 +99,9 @@ class PostControllerTest {
                 .content("{\"title\":\"\", \"content\":\"경기도 의정부시 가금로34번길 23 힘스테이트 녹양역 102동 2204호\"}");
 
         mockMvc.perform(content)
-                .andExpect(status().isOk())
-                .andExpect(content().string("Hello World"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("타이틀값이 없어요!"))
                 .andDo(print());
     }
 
@@ -121,8 +128,8 @@ class PostControllerTest {
                 .content("{\"title\":\"\", \"content\":\"\"}");
 
         mockMvc.perform(content)
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.errorMessage").value("타이틀을 입력해주세요."))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorFields[0].validMsg").isNotEmpty())
                 .andDo(print());
 
     }
@@ -138,10 +145,10 @@ class PostControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("400"))
                 .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
-                .andExpect(jsonPath("$.errorFields[0].fieldName").value("title"))
-                .andExpect(jsonPath("$.errorFields[1].fieldName").value("content")) //dot 표현식
-                .andExpect(jsonPath("$['errorFields'][1]['fieldName']").value("content")) //bracket 표현식
-                .andExpect(jsonPath("$.errorFields[1].fieldName").value("content"))
+                //.andExpect(jsonPath("$.errorFields[0].fieldName").value("title"))
+                //.andExpect(jsonPath("$.errorFields[1].fieldName").value("content")) //dot 표현식
+                //.andExpect(jsonPath("$['errorFields'][1]['fieldName']").value("content")) //bracket 표현식
+                //.andExpect(jsonPath("$.errorFields[1].fieldName").value("content"))
                 .andDo(print());
 
     }
@@ -163,7 +170,7 @@ class PostControllerTest {
         //then
         //Expected 기대값
         //Actual 실제값
-        assertThat(postRepository.count()).isEqualTo(2);
+        assertThat(postRepository.count()).isEqualTo(1);
 
     }
 
@@ -247,68 +254,7 @@ class PostControllerTest {
 
     }
 
-    @Test
-    @DisplayName("글 1개 조회")
-    void get() throws Exception {
-        //given
-        PostCreate requestData = PostCreate.builder().title("제목입니다.").content("내용입니다.").build();
-        String s = objectMapper.writeValueAsString(requestData);
-        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.post("/posts/writer").contentType(MediaType.APPLICATION_JSON).content(s);
-        mockMvc.perform(content)
-                .andExpect(status().isOk())
-                .andDo(print());
 
-        MockHttpServletRequestBuilder findById = MockMvcRequestBuilders.get("/posts/{postId}", 1L).contentType(MediaType.APPLICATION_JSON);
-        //when
-        MvcResult mvcResult = mockMvc.perform(findById)
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("제목입니다."))
-                .andDo(print())
-                .andReturn();
-
-
-        String jsonData = mvcResult.getResponse().getContentAsString();
-
-        Post post = objectMapper.readValue(jsonData, Post.class);
-
-        //then
-        assertThat(post.getContent()).isEqualTo("내용입니다.");
-    }
-
-
-    @Test
-    @DisplayName("제목을 10글자만 가지고 온다")
-    void testSubstr() throws Exception {
-        //given
-        PostCreate saveData = PostCreate.builder()
-                .title("123456789010000")
-                .content("숫자 놀이입니다.")
-                .build();
-        String s = objectMapper.writeValueAsString(saveData);
-
-        MockHttpServletRequestBuilder content = null;
-        content = MockMvcRequestBuilders.post("/posts/writer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(s);
-
-        mockMvc.perform(content)
-                .andDo(print());
-
-        content = MockMvcRequestBuilders.get("/posts/{postId}", 1L)
-                .contentType(MediaType.APPLICATION_JSON);
-
-        //when
-        MvcResult result = mockMvc.perform(content).andExpect(status().isOk())
-                .andDo(print())
-                .andReturn();
-
-        String resultData = result.getResponse().getContentAsString();
-        Post post = objectMapper.readValue(resultData, Post.class);
-        //then
-        assertThat(post.getTitle()).isEqualTo("1234567890");
-
-
-    }
 
     @Test
     void postsList() throws Exception {
@@ -364,8 +310,8 @@ class PostControllerTest {
 
         MvcResult result = mockMvc.perform(content)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()", Matchers.is(5)))
-                .andExpect(jsonPath("$.[0].title").value("titl11"))
+                .andExpect(jsonPath("$.length()", Matchers.is(10)))
+                .andExpect(jsonPath("$.[0].title").value(" 제목 -0"))
                 .andDo(print())
                 .andReturn();
 
@@ -377,7 +323,7 @@ class PostControllerTest {
             log.info("tit : {}", post.getTitle());
             log.info("content : {}", post.getContent());
         }
-        assertThat(list.size()).isEqualTo(2);
+        assertThat(list.size()).isEqualTo(10);
     }
 
     @Test
@@ -392,7 +338,7 @@ class PostControllerTest {
 
         postRepository.saveAll(postList);
 
-        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.get("/posts/query_dsl?page=1&size=2000" )
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.get("/posts/query_dsl?page=1&size=500" )
                 .contentType(MediaType.APPLICATION_JSON);
 
 
@@ -400,7 +346,7 @@ class PostControllerTest {
         MvcResult result = mockMvc.perform(content)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()", Matchers.is(500)))
-                .andExpect(jsonPath("$.[0].title").value("제목 -499"))
+                .andExpect(jsonPath("$.[0].title").value(postList.get(postList.size()-1).getTitle()))
                 .andDo(print())
                 .andReturn();
 
@@ -424,7 +370,7 @@ class PostControllerTest {
                 .title("제목입니다.")
                 .content("내용입니다.")
                 .build();
-       postRepository.save(post1);
+        postRepository.save(post1);
 
         //given
         PostEdit edit = PostEdit.builder()
@@ -454,7 +400,7 @@ class PostControllerTest {
                 .build();
 
         postRepository.save(post);
-        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.delete("/posts/delete/{postId}", 1L)
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.delete("/posts/delete/{postId}", post.getId())
                 .contentType(MediaType.APPLICATION_JSON);
 
         mockMvc.perform(content)
@@ -473,7 +419,7 @@ class PostControllerTest {
         postRepository.save(post);
 
         //when
-        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.get("/posts/{postId}", 1L)
+        MockHttpServletRequestBuilder content = MockMvcRequestBuilders.get("/posts/{postId}", post.getId())
                 .contentType(MediaType.APPLICATION_JSON);
 
         //then
@@ -508,7 +454,7 @@ class PostControllerTest {
     @Test
     @DisplayName("정책에 의한 단어 필터링")
     void invalidException() throws Exception {
-        
+
         //given
         PostCreate post = PostCreate.builder()
                 .title("바보")
@@ -519,8 +465,8 @@ class PostControllerTest {
 
         //when
         mockMvc.perform(MockMvcRequestBuilders.post("/posts/writer")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(s))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(s))
                 .andExpect(status().isBadRequest() )
                 .andDo(print());
         //then

@@ -1,6 +1,7 @@
 package com.jinblog.api.repository;
 
 import com.jinblog.api.domain.Post;
+import com.jinblog.api.domain.QPost;
 import com.jinblog.api.request.PostSearch;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +17,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
 
     @Override
     public List<Post> postsPage(PostSearch postSearch) {
-        return jpaQueryFactory.selectFrom(post)
+        return jpaQueryFactory.selectFrom(QPost.post)
                 .limit(postSearch.getSize())
                 .offset(postSearch.getOffset())
-                .orderBy(post.id.desc())
+                .orderBy(QPost.post.id.desc())
                 .fetch();
     }
 }

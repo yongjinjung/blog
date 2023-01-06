@@ -15,7 +15,10 @@ public class PostSearch {
     private Integer size = 10;
 
     public long getOffset(){
-        return (Math.max(page-1, 1)) * Math.min(size, 500);
+        return (Math.max(page, 1) -1) * Math.min(size, 500);
     }
 
 }
+
+
+

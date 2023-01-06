@@ -38,123 +38,122 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("글 작성")
-    void write() {
-
+    @DisplayName("게시글을 등록한다.")
+    void write(){
         //given
-        PostCreate postCreate = PostCreate.builder().title("제목입니다.").content("내용입니다.").build();
+        PostCreate postCreate = PostCreate.builder()
+                .title("제목입니다.")
+                .content("내용입니다.")
+                .build();
 
         //when
-        PostService postService = new PostService(postRepository);
-        postService.write(postCreate);
+        Post post = postService.write(postCreate);
+        Post result = postService.get(post.getId());
 
-        //then
-        List<Post> list = postRepository.findAll();
-        Post post = list.get(0);
-        assertThat(post.getTitle()).isEqualTo("제목입니다.");
-        assertThat(post.getContent()).isEqualTo("내용입니다.");
+        //then 동등성비교
+        assertThat(post).usingRecursiveComparison().isEqualTo(result);
+
 
     }
 
     @Test
-    @DisplayName("특정 글 목록을 조회한다.")
-    void get() throws Exception {
+
+    @DisplayName("게시글을 조회한다.")
+    void get() throws Exception{
+
         //given
         Post post = Post.builder()
-                .title("foot")
-                .content("bar")
+                .title("제목입니다.")
+                .content("내용입니다.")
                 .build();
-
-        Long id = 1L;
         postRepository.save(post);
 
         //when
-        Post resultPost = postService.get(id);
+        Post result = postService.get(post.getId());
 
-        //then
-        assertThat(resultPost).isNotNull();
+        //then 동등성비교
+        assertThat(result).usingRecursiveComparison().isEqualTo(post);
     }
 
     @Test
-    @DisplayName("글 리스트 조회")
-    void postList() {
-        Post post1 = Post.builder()
-                .title("titl1")
-                .content("cont1")
-                .build();
-        postRepository.save(post1);
-        Post post2 = Post.builder()
-                .title("titl2")
-                .content("cont2")
-                .build();
-        postRepository.save(post2);
-
-        List<Post> list = postService.postsList();
-
-
-        assertThat(list.size()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("글 조회")
-    void postList2() {
+    @DisplayName("게시글을 리스트를 조회한다.")
+    void postsList() throws Exception{
 
         //given
-        List<Post> postList = IntStream.range(0, 30)
-                .mapToObj(i -> Post.builder()
-                        .title(" 제목 -" + i)
-                        .content("내용 - " + i)
-                        .build())
-                .collect(Collectors.toList());
+        List<Post> posts = IntStream.range(0, 30)
+                .mapToObj(
+                        i -> Post.builder()
+                                .title("title-" + i)
+                                .content("content-"+i)
+                                .build()
+                ).collect(Collectors.toList());
 
-        postRepository.saveAll(postList);
+        postRepository.saveAll(posts);
+        //when
+        List<Post> list = postService.postsList();
 
-        Pageable page = PageRequest.of(0, 5, Sort.Direction.DESC, "id");
+        //then
+        assertThat(list.size()).isEqualTo(30);
+    }
+
+    @Test
+    @DisplayName("게시글을 Pageable 를 이용한 페이징 처리한다.")
+    void postsPage(){
+        //given
+        List<Post> posts = IntStream.range(0, 500)
+                .mapToObj(
+                        i -> Post.builder()
+                                .title("title-" + i)
+                                .content("content-" + i)
+                                .build()
+                ).collect(Collectors.toList());
+        postRepository.saveAll(posts);
+        Pageable page  = PageRequest.of(0, 20, Sort.Direction.DESC, "id");
         //when
         List<Post> list = postService.postsPage(page);
 
         //then
-        assertThat(list.size()).isEqualTo(5);
-
+        assertThat(list.get(0).getTitle()).isEqualTo(posts.get(posts.size()-1).getTitle());
+        assertThat(list.size()).isEqualTo(20);
+        assertThat(postRepository.count()).isEqualTo(500);
 
     }
 
-
     @Test
-    @DisplayName("QueryDSL 를 이용한다")
-    void queryDslPostPage() {
+    @DisplayName("게시글을 쿼리디에스엘로 페이징 처리한다.")
+    void queryDslPostPage(){
         //given
-        List<Post> postList = IntStream.range(0, 20)
-                .mapToObj(i -> Post.builder()
-                        .title(" 제목 -" + i)
-                        .content("내용 - " + i)
-                        .build())
-                .collect(Collectors.toList());
-
-        postRepository.saveAll(postList);
-
-        PostSearch search = PostSearch.builder()
+        List<Post> posts = IntStream.range(0, 500)
+                .mapToObj(
+                        i -> Post.builder()
+                                .title("title-" + i)
+                                .content("content-" + i)
+                                .build()
+                ).collect(Collectors.toList());
+        postRepository.saveAll(posts);
+        PostSearch page = PostSearch.builder()
                 .page(1)
+                .size(400)
                 .build();
-
         //when
-        List<Post> list = postService.queryDslPostPage(search);
+        List<Post> list = postService.queryDslPostPage(page);
 
         //then
         log.info("list : {}", list);
-
-        assertThat(list.size()).isEqualTo(20);
+        assertThat(list.get(0).getTitle()).isEqualTo(posts.get(posts.size()-1).getTitle());
+        assertThat(list.size()).isEqualTo(400);
+        assertThat(postRepository.count()).isEqualTo(500);
 
     }
 
-
     @Test
-    @DisplayName("내용을 수정한다.")
-    void update() {
+    @DisplayName("게시글을 수정한다.")
+    void edit()throws Exception{
         //given
-
-        Post post = new Post("제목입니다.", "내용입니다.");
-
+        Post post = Post.builder()
+                .title("제목입니다.")
+                .content("내용입니다.")
+                .build();
         postRepository.save(post);
 
         PostEdit postEdit = PostEdit.builder()
@@ -164,17 +163,16 @@ class PostServiceTest {
 
         //when
         postService.edit(post.getId(), postEdit);
-        Post post1 = postService.get(post.getId());
+        Post result = postService.get(post.getId());
 
-        //then
-        assertThat(post1.getContent()).isEqualTo(postEdit.getContent());
-
+        //then 동등성비교
+        assertThat(result.getTitle()).isEqualTo(postEdit.getTitle());
+        assertThat(result.getContent()).isEqualTo(postEdit.getContent());
     }
 
-
     @Test
-    @DisplayName("컨텐츠 내용을 삭제한다.")
-    void delete() {
+    @DisplayName("게시글을 삭제한다.")
+    void delete(){
         //given
         Post post = new Post("제목입니다.", "내용입니다.");
         postRepository.save(post);
@@ -214,5 +212,4 @@ class PostServiceTest {
                 .isInstanceOf(PostNotFound.class)
                 .hasMessage("존재하지 않는 글입니다.");
     }
-
 }

@@ -23,10 +23,10 @@ public class PostService {
 
     private final PostRepository postRepository;
 
-    public void write(PostCreate postCreate){
+    public Post write(PostCreate postCreate){
 
         Post post = new Post(postCreate.getTitle(), postCreate.getContent());
-        postRepository.save(post);
+        return postRepository.save(post);
     }
 
     public Post get(Long id){
@@ -39,7 +39,13 @@ public class PostService {
     }
 
     public List<Post> postsPage(Pageable of){
-        return postRepository.findAll(of).stream().map( post -> Post.builder().title(post.getTitle()).content(post.getContent()).build()).collect(Collectors.toList());
+        return postRepository.findAll(of)
+                .stream()
+                .map( post -> Post.builder()
+                        .title(post.getTitle())
+                        .content(post.getContent())
+                        .build() )
+                .collect(Collectors.toList());
     }
 
     public List<Post> queryDslPostPage(PostSearch postSearch){
