@@ -155,4 +155,11 @@ postRepository.saveAll(postList);
         return ResponseEntity.ok(post);
     }
 
+    @ResponseBody
+    @DeleteMapping("/posts/delete/{postId}")
+    public ResponseEntity<Object> postDelete(@PathVariable(name="postId") Long id){
+        postService.delete(id);
+        return ResponseEntity.ok("ok");
+    }
+
 }

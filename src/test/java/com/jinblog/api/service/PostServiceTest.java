@@ -170,4 +170,20 @@ class PostServiceTest {
 
     }
 
+
+    @Test
+    @DisplayName("컨텐츠 내용을 삭제한다.")
+    void delete() {
+        //given
+        Post post = new Post("제목입니다.", "내용입니다.");
+        postRepository.save(post);
+
+        //when
+        postService.delete(post.getId());
+
+        //then
+        assertThat(postRepository.count()).isEqualTo(0);
+    }
+
+
 }
