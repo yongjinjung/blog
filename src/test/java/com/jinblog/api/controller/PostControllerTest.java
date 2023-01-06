@@ -500,11 +500,29 @@ class PostControllerTest {
 
         //then
         mockMvc.perform(content)
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value(post.getTitle()))
-                .andExpect(jsonPath("$.content").value(post.getContent()))
+                .andExpect(status().isNotFound())
                 .andDo(print());
 
     }
 
+    @Test
+    @DisplayName("정책에 의한 단어 필터링")
+    void invalidException() throws Exception {
+        
+        //given
+        PostCreate post = PostCreate.builder()
+                .title("바보")
+                .content("내용입니다.")
+                .build();
+
+        String s = objectMapper.writeValueAsString(post);
+
+        //when
+        mockMvc.perform(MockMvcRequestBuilders.post("/posts/writer")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(s))
+                .andExpect(status().isBadRequest() )
+                .andDo(print());
+        //then
+    }
 }

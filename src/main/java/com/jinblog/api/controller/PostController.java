@@ -2,6 +2,7 @@ package com.jinblog.api.controller;
 
 
 import com.jinblog.api.domain.Post;
+import com.jinblog.api.exception.InvalidRequest;
 import com.jinblog.api.repository.PostRepository;
 import com.jinblog.api.request.PostCreate;
 import com.jinblog.api.request.PostEdit;
@@ -100,6 +101,7 @@ public class PostController {
     @PostMapping("/posts/writer")
     @ResponseBody
     public ResponseEntity<Object> postWriter(@RequestBody @Validated PostCreate params){
+        params.validate();
         postService.write(params);
         return ResponseEntity.ok("ok");
     }

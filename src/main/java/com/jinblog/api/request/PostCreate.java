@@ -1,6 +1,7 @@
 package com.jinblog.api.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jinblog.api.exception.InvalidRequest;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
@@ -22,5 +23,15 @@ public class PostCreate {
 
     @NotBlank(message = "컨텐츠를 입력해주세요.")
     private String content;
+
+
+    public void validate(){
+        if(title.contains("바보")){
+            ErrorField field = new ErrorField("title", "제목에 바보를 포함할 수 없습니다.");
+            throw new InvalidRequest(field);
+        }
+    }
+
+
 
 }

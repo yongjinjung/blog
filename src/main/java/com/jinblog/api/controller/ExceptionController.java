@@ -1,5 +1,6 @@
 package com.jinblog.api.controller;
 
+import com.jinblog.api.exception.JinBlogException;
 import com.jinblog.api.request.ErrorField;
 import com.jinblog.api.request.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 @ControllerAdvice
 public class ExceptionController {
@@ -26,6 +24,21 @@ public class ExceptionController {
         log.error("exceptionHandler ");
 
         return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
+    }
+
+    @ResponseBody
+    @ExceptionHandler(JinBlogException.class)
+    public ResponseEntity<Object> exceptionHandler(JinBlogException e){
+
+        ErrorResponse body = ErrorResponse.builder()
+                .code(e.getStatusCode())
+                .message(e.getMessage())
+                .build();
+
+        if(e.getStatusCode() == 400){
+            body.addErrorField(e.getErrorField());
+        }
+        return ResponseEntity.status(e.getStatusCode()).body(body);
     }
 
     @ResponseBody
